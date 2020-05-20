@@ -62,8 +62,11 @@ namespace mtga_open
             }
             RunDayTwo(dayTwoPlayers);
 
-            Console.WriteLine("Day one average Elo: " + players.Average(p => p.Elo) + ".");
-            Console.WriteLine("Day two average Elo: " + dayTwoPlayers.Average(p => p.Elo) + ".");
+            var dayOneAvgElo = players.Average(p => p.Elo);
+            var dayTwoAvgElo = dayTwoPlayers.Average(p => p.Elo);
+            var dayTwoWinPercent = EloCalculator.PredictResult(dayTwoAvgElo, (decimal)eloMean)[0]*100;
+            Console.WriteLine($"Day one average Elo: {dayOneAvgElo}.");
+            Console.WriteLine($"Day two average Elo: {dayTwoAvgElo} ({dayTwoWinPercent,3:0.0}% win percent).");
 
             var numBuckets = 100;
             var bucketSize = numPlayers / numBuckets;
@@ -74,7 +77,7 @@ namespace mtga_open
 
             var eloSorted = players.OrderBy(p => p.Elo).ToList();
             var skip = 0;
-            while (skip + numBuckets <= eloSorted.Count)
+            while (skip + bucketSize <= eloSorted.Count)
             {
                 var nextBucket = eloSorted.Skip(skip).Take(bucketSize).ToList();
                 var minElo = (int)nextBucket.Min(p => p.Elo);
@@ -86,8 +89,9 @@ namespace mtga_open
                 var avgDayTwoWins = nextBucket.Average(p => p.DayTwoWins);
                 var avgDayTwoLosses = nextBucket.Average(p => p.DayTwoLosses);
                 var winPercentage = EloCalculator.PredictResult(avgElo, (decimal)eloMean)[0]*100;
+                var bucketNumber = skip/bucketSize+1;
 
-                Console.WriteLine($"{avgElo} ({minElo}-{maxElo}) ({winPercentage,4:0.0}%): {avgGems} gems, " +
+                Console.WriteLine($"{avgElo} ({minElo}-{maxElo}) ({winPercentage,3:0.0}% game win%, bucket #{bucketNumber}): {avgGems} gems, " +
                                   $"{avgDayOneWins,3:0.0}-{avgDayOneLosses,3:0.0} on day one, " +
                                   $"{avgDayTwoWins,3:0.0}-{avgDayTwoLosses,3:0.0} on day two.");
                 skip += bucketSize;
